@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="theme-color" content="#f3f5ef">
+	<title>Simple Interest Loan Planner</title>
+	<style>
+		@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+		:root {
+			color-scheme: light;
+			--ink: #18251f;
+			--muted: #64716a;
+			--paper: #f3f5ef;
+			--surface: #fff;
+			--line: #dce3da;
+			--green: #226b4c;
+			--green-dark: #174c36;
+			--lime: #d7f078;
+			--orange: #ef7953;
+			--mono: "DM Mono", Consolas, monospace;
+			--sans: "Manrope", "Segoe UI", sans-serif;
+		}
+
+		* { box-sizing: border-box; }
+
+		body {
+			min-height: 100vh;
+			margin: 0;
+			color: var(--ink);
+			background-color: var(--paper);
+			background-image: radial-gradient(#cbd5c9 0.65px, transparent 0.65px);
+			background-size: 18px 18px;
+			font-family: var(--sans);
+		}
+
+		button, input, select { font: inherit; }
+
+		.shell { width: min(1040px, calc(100% - 40px)); margin: 0 auto; }
+
+		header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			padding: 25px 0;
+			border-bottom: 1px solid var(--line);
+		}
+
+		.brand { display: flex; align-items: center; gap: 11px; font-size: 14px; font-weight: 800; }
+		.brand-mark { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 9px; background: var(--green); color: white; }
+		.brand-mark svg { width: 19px; height: 19px; }
+		.server-state { display: flex; align-items: center; gap: 8px; color: var(--muted); font: 12px var(--mono); }
+		.state-dot { width: 8px; height: 8px; border-radius: 50%; background: #54a878; box-shadow: 0 0 0 3px #54a87822; }
+
+		main { padding: 52px 0 72px; }
+		.intro { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 31px; animation: rise .45s ease-out both; }
+		.eyebrow { margin: 0 0 12px; color: var(--green); font: 11px var(--mono); letter-spacing: 0; text-transform: uppercase; }
+		h1 { margin: 0; font-size: 42px; line-height: 1.06; letter-spacing: 0; }
+		.intro-copy { max-width: 350px; margin: 0 0 3px; color: var(--muted); font-size: 14px; line-height: 1.7; }
+
+		.route-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+		.route-card { min-width: 0; padding: 22px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); animation: rise .5s ease-out both; }
+		.route-card:nth-child(2) { animation-delay: .06s; }
+		.route-card:nth-child(3) { animation-delay: .12s; }
+		.route-card:nth-child(4) { animation-delay: .18s; }
+		.route-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 17px; }
+		.route-label { display: flex; align-items: center; gap: 9px; font-size: 14px; font-weight: 800; }
+		.route-icon { display: grid; width: 29px; height: 29px; place-items: center; border-radius: 7px; background: #edf4e8; color: var(--green); }
+		.route-icon svg { width: 16px; height: 16px; }
+		.method { padding: 5px 8px; border-radius: 4px; background: #edf4e8; color: var(--green); font: 10px var(--mono); }
+		.method.post { background: #fff0e9; color: #a94d2e; }
+		.path { margin: 0 0 17px; color: #56645b; font: 12px var(--mono); }
+		.field-label { display: block; margin-bottom: 7px; color: var(--muted); font-size: 11px; font-weight: 700; }
+		.control-row { display: flex; gap: 8px; }
+		input, select { width: 100%; min-width: 0; height: 42px; padding: 0 12px; border: 1px solid var(--line); border-radius: 5px; outline: none; background: #fcfdfa; color: var(--ink); }
+		input:focus, select:focus { border-color: var(--green); box-shadow: 0 0 0 3px #226b4c18; }
+		button { flex: 0 0 auto; height: 42px; padding: 0 14px; border: 0; border-radius: 5px; background: var(--green); color: white; font-size: 12px; font-weight: 800; cursor: pointer; transition: background .15s, transform .15s; }
+		button:hover { transform: translateY(-1px); background: var(--green-dark); }
+		button:focus-visible { outline: 3px solid #a2c7ab; outline-offset: 2px; }
+		button.danger { background: var(--orange); }
+		button.danger:hover { background: #d95f3a; }
+		.hint { margin: 11px 0 0; color: #78847c; font-size: 11px; line-height: 1.5; }
+		.result { display: none; margin-top: 13px; padding: 10px 12px; border-left: 3px solid var(--green); border-radius: 2px; background: #f0f6ef; overflow-wrap: anywhere; font: 11px/1.6 var(--mono); }
+		.result.visible { display: block; }
+		.result.error { border-color: var(--orange); background: #fff3ee; }
+		.calculate-controls { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+		.calculate-controls button { grid-column: 1 / -1; }
+		.calculator-layout { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(270px, .85fr); gap: 14px; align-items: stretch; }
+		.loan-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 17px 14px; }
+		.field-group { min-width: 0; }
+		.field-group input { display: block; }
+		.calculate-button { width: 100%; margin-top: 21px; }
+		.form-error { display: none; margin: 12px 0 0; padding: 10px 12px; border-left: 3px solid var(--orange); background: #fff3ee; color: #783d2d; font-size: 12px; line-height: 1.5; }
+		.form-error.visible { display: block; }
+		.estimate-panel { padding: 24px; border-radius: 8px; background: var(--green-dark); color: white; animation: rise .5s .08s ease-out both; }
+		.estimate-kicker { margin: 0 0 21px; color: var(--lime); font: 10px var(--mono); }
+		.payment-label { margin: 0 0 4px; color: #d5e5d9; font-size: 12px; }
+		.payment-amount { margin: 0; font-size: 38px; line-height: 1.15; overflow-wrap: anywhere; }
+		.payment-caption { margin: 7px 0 22px; color: #c5d8cb; font-size: 11px; }
+		.estimate-divider { height: 1px; margin: 0 0 16px; border: 0; background: #ffffff35; }
+		.estimate-row { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid #ffffff25; font-size: 12px; }
+		.estimate-row:last-child { border-bottom: 0; }
+		.estimate-row span:first-child { color: #c5d8cb; }
+		.estimate-row output { font-family: var(--mono); text-align: right; }
+		.model-note { margin: 16px 0 0; color: #c5d8cb; font-size: 10px; line-height: 1.6; }
+
+		.notice { display: flex; align-items: center; gap: 10px; margin-top: 16px; padding: 13px 15px; border: 1px solid #ead9b5; border-radius: 6px; background: #fff9e9; color: #675a3c; font-size: 12px; line-height: 1.5; }
+		.notice svg { flex: 0 0 auto; width: 16px; height: 16px; color: #9c7731; }
+		footer { display: flex; justify-content: space-between; gap: 12px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--muted); font: 10px var(--mono); }
+
+		@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+		@media (max-width: 680px) {
+			.shell { width: min(100% - 28px, 500px); }
+			main { padding-top: 36px; }
+			.intro { display: block; }
+			.intro-copy { margin-top: 14px; }
+			h1 { font-size: 32px; }
+			.calculator-layout { grid-template-columns: 1fr; }
+			.route-card { padding: 19px; }
+			.estimate-panel { padding: 21px; }
+			footer { flex-direction: column; }
+		}
+		@media (max-width: 440px) { .loan-fields { grid-template-columns: 1fr; } }
+		@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+	</style>
+</head>
+<body>
+	<div class="shell">
+		<header>
+			<div class="brand">
+				<span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 7h14M5 12h9M5 17h6"/><circle cx="18" cy="16" r="3"/></svg></span>
+				<span>Loan Planner</span>
+			</div>
+			<div class="server-state"><span class="state-dot" aria-hidden="true"></span> SIMPLE INTEREST</div>
+		</header>
+
+		<main>
+			<section class="intro" aria-labelledby="page-title">
+				<div>
+					<p class="eyebrow">Loan planner / repayment estimate</p>
+					<h1 id="page-title">Plan your payoff<span style="color:var(--orange)">.</span></h1>
+				</div>
+				<p class="intro-copy">Estimate a flat-interest monthly payment and see when the loan is scheduled to close.</p>
+			</section>
+
+			<section class="calculator-layout" aria-label="Loan repayment estimate">
+				<article class="route-card">
+					<div class="route-top">
+						<div class="route-label"><span class="route-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h2m4 0h2m-8 4h2m4 0h2m-8 3h2m4 0h2"/></svg></span>Loan details</div>
+						<span class="method post">ESTIMATE</span>
+					</div>
+					<form id="loan-form">
+						<div class="loan-fields">
+							<div class="field-group">
+								<label class="field-label" for="principal">Loan amount</label>
+								<input id="principal" name="principal" type="number" min="0.01" max="1000000000000" step="0.01" placeholder="e.g. 250000" required>
+							</div>
+							<div class="field-group">
+								<label class="field-label" for="annual-rate">Annual interest rate (%)</label>
+								<input id="annual-rate" name="annual_rate" type="number" min="0" max="1000" step="0.01" placeholder="e.g. 8.5" required>
+							</div>
+							<div class="field-group">
+								<label class="field-label" for="term-months">Loan term (months)</label>
+								<input id="term-months" name="term_months" type="number" min="1" max="1200" step="1" placeholder="e.g. 36" required>
+							</div>
+							<div class="field-group">
+								<label class="field-label" for="start-date">Loan start date</label>
+								<input id="start-date" name="start_date" type="date" required>
+							</div>
+						</div>
+						<button class="calculate-button" type="submit">Calculate monthly payment</button>
+						<p class="form-error" id="form-error" role="alert"></p>
+					</form>
+				</article>
+
+				<aside class="estimate-panel" aria-label="Estimated repayment" aria-live="polite">
+					<p class="estimate-kicker">ESTIMATED REPAYMENT</p>
+					<p class="payment-label">Estimated monthly payment</p>
+					<p class="payment-amount" id="monthly-payment">--</p>
+					<p class="payment-caption">per month, for the selected term</p>
+					<hr class="estimate-divider">
+					<div class="estimate-row"><span>Loan amount</span><output id="result-principal">--</output></div>
+					<div class="estimate-row"><span>Total interest</span><output id="result-interest">--</output></div>
+					<div class="estimate-row"><span>Total repayment</span><output id="result-total">--</output></div>
+					<div class="estimate-row"><span>Expected payoff</span><output id="result-payoff">--</output></div>
+					<p class="model-note">Uses flat simple interest on the original loan amount. Actual lender fees and payment schedules may change the final amount.</p>
+				</aside>
+			</section>
+		</main>
+
+		<footer><span>SIMPLE INTEREST ESTIMATE</span><span>For planning purposes</span></footer>
+	</div>
+
+	<script>
+		const loanForm = document.querySelector('#loan-form');
+		const formError = document.querySelector('#form-error');
+		const submitButton = loanForm.querySelector('button[type="submit"]');
+		const startDateInput = document.querySelector('#start-date');
+		const today = new Date();
+		startDateInput.value = [
+			today.getFullYear(),
+			String(today.getMonth() + 1).padStart(2, '0'),
+			String(today.getDate()).padStart(2, '0')
+		].join('-');
+
+		const amountFormat = new Intl.NumberFormat(undefined, {
+			minimumFractionDigits: 2,
+			maximumFractionDigits: 2
+		});
+
+		loanForm.addEventListener('submit', async (event) => {
+			event.preventDefault();
+			formError.classList.remove('visible');
+			if (window.location.protocol === 'file:') {
+				formError.textContent = 'Open this app at http://127.0.0.1:5000 to calculate through Flask.';
+				formError.classList.add('visible');
+				return;
+			}
+
+			submitButton.disabled = true;
+			submitButton.textContent = 'Calculating...';
+			try {
+				const response = await fetch('/calculate', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(Object.fromEntries(new FormData(loanForm)))
+				});
+				const estimate = await response.json();
+				if (!response.ok) throw new Error(estimate.error || 'Unable to calculate this loan.');
+
+				document.querySelector('#monthly-payment').textContent = amountFormat.format(Number(estimate.monthly_payment));
+				document.querySelector('#result-principal').textContent = amountFormat.format(Number(estimate.principal));
+				document.querySelector('#result-interest').textContent = amountFormat.format(Number(estimate.interest));
+				document.querySelector('#result-total').textContent = amountFormat.format(Number(estimate.total_repayment));
+				document.querySelector('#result-payoff').textContent = new Intl.DateTimeFormat(undefined, {
+					year: 'numeric', month: 'short', day: 'numeric'
+				}).format(new Date(`${estimate.payoff_date}T00:00:00`));
+			} catch (error) {
+				formError.textContent = `Could not calculate the loan: ${error.message}`;
+				formError.classList.add('visible');
+			} finally {
+				submitButton.disabled = false;
+				submitButton.textContent = 'Calculate monthly payment';
+			}
+		});
+	</script>
+</body>
+</html>
